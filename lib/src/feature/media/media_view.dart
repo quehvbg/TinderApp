@@ -17,7 +17,7 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
   MediaPagePresenter _presenter;
   User people;
   bool _isViewDetails = false;
-  bool _isLoading = true;
+  bool _isNetworkConnected = true;
   int _selectedIndex = 0;
 
   _MediaPageState() {
@@ -27,44 +27,45 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
   @override
   void initState() {
     super.initState();
-    _isLoading = true;
+    _isNetworkConnected = true;
     _isViewDetails = false;
     _selectedIndex = 0;
     _presenter.nextPeople();
   }
 
-  void _showSnackBar(String text) {
-    _globalKey.currentState.showSnackBar(new SnackBar(
-      content: Text(text),
-      duration: Duration(seconds: 5),
-      backgroundColor: Colors.grey,
-      action: SnackBarAction(
-        label: "Ok",
-        onPressed: () async {
-          _presenter.nextPeople();
-        },
+  Widget NoNetworkConnected = Center(
+    child: Padding(
+      padding: EdgeInsets.only(left: 16.0, right: 16.0),
+      child: Center(
+        child: Text(
+          "Lỗi kết nối mạng, vui lòng mở kết nối mạng hoặc thử mở lại trang",
+          textScaleFactor: 2.0,
+          textAlign: TextAlign.center,
+        ),
       ),
-    ));
-  }
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     _context = context;
     final screenSize = MediaQuery.of(context).size;
 
-    final loadImage = new CachedNetworkImage(
-      imageUrl: people.picture,
-      imageBuilder: (context, imageProvider) => Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: imageProvider,
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-      placeholder: (context, url) => CircularProgressIndicator(),
-      errorWidget: (context, url, error) => Icon(Icons.error),
-    );
+    final loadImage = people != null
+        ? new CachedNetworkImage(
+            imageUrl: people.picture,
+            imageBuilder: (context, imageProvider) => Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: imageProvider,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          )
+        : NoNetworkConnected;
 
     Widget cardControl = Card(
       color: Colors.white,
@@ -96,14 +97,25 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                                 constraints: BoxConstraints.expand(height: 100),
                                 child: TabBarView(
                                   children: <Widget>[
-                                    TabInfo("My name is",
-                                        "${people.name.title} ${people.name.first} ${people.name.last}"),
-                                    TabInfo("My SSN is", people.SSN),
-                                    TabInfo("My address is",
-                                        "${people.location.street} - ${people.location.city} - ${people.location.state}"),
-                                    TabInfo("My phone is",
-                                        "${people.phone} - or ${people.cell}"),
-                                    TabInfo("My password is", people.password),
+                                    TabInfo(
+                                        "My name is",
+                                        people != null
+                                            ? "${people.name.title} ${people.name.first} ${people.name.last}"
+                                            : ""),
+                                    TabInfo("My SSN is",
+                                        people != null ? people.SSN : ""),
+                                    TabInfo(
+                                        "My address is",
+                                        people != null
+                                            ? "${people.location.street} - ${people.location.city} - ${people.location.state}"
+                                            : ""),
+                                    TabInfo(
+                                        "My phone is",
+                                        people != null
+                                            ? "${people.phone} - or ${people.cell}"
+                                            : ""),
+                                    TabInfo("My password is",
+                                        people != null ? people.password : ""),
                                   ],
                                 ),
                               ),
@@ -172,11 +184,13 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                 ),
               ),
               Container(
-                  child: new CircleAvatar(
-                      foregroundColor: Colors.white,
-                      radius: 30.0,
-                      backgroundImage: NetworkImage(people.picture),
-                      backgroundColor: Colors.transparent),
+                  child: people != null
+                      ? new CircleAvatar(
+                          foregroundColor: Colors.white,
+                          radius: 30.0,
+                          backgroundImage: NetworkImage(people.picture),
+                          backgroundColor: Colors.transparent)
+                      : Text(""),
                   width: 150.0,
                   height: 150.0,
                   padding: const EdgeInsets.all(3.0), // borde width
@@ -215,12 +229,19 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
     );
 
     Widget resultView;
-    if (_isLoading) {
-      resultView = Center(
-        child: Padding(
-          padding: EdgeInsets.only(left: 16.0, right: 16.0),
-          child: CircularProgressIndicator(),
+    if (!_isNetworkConnected) {
+      resultView = Scaffold(
+        key: _globalKey,
+        appBar: AppBar(
+          title: Text("Tinder"),
+          centerTitle: true,
+          backgroundColor: HexColor("#FE3C72"),
+          actions: <Widget>[
+            IconButton(
+                icon: Icon(Icons.favorite), onPressed: showFavoritePeople),
+          ],
         ),
+        body: NoNetworkConnected,
       );
     } else {
       resultView = Scaffold(
@@ -263,9 +284,15 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                   });
                 },
                 onSwipeLeft: () {
+                  setState(() {
+                    _isNetworkConnected = true;
+                  });
                   _presenter.nextPeople();
                 },
                 onSwipeRight: () {
+                  setState(() {
+                    _isNetworkConnected = true;
+                  });
                   _presenter.addFavorite(people);
                 }),
           ),
@@ -275,6 +302,8 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
     return resultView;
   }
 
+  void getPeople() {}
+
   void viewDetails() {
     setState(() {
       _isViewDetails = true;
@@ -283,19 +312,21 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
 
   @override
   void showFavoritePeople() {
-    Navigator.of(context).pushNamed("/favorite");
+    Navigator.of(_context).pushNamed("/favorite");
   }
 
   @override
   void showPeople(User user) {
     setState(() {
-      _isLoading = false;
+      _isNetworkConnected = true;
       people = user;
     });
   }
 
   @override
   void showError(String error) {
-    _showSnackBar(error);
+    setState(() {
+      _isNetworkConnected = false;
+    });
   }
 }

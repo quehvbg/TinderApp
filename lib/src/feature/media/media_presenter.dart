@@ -20,7 +20,7 @@ class MediaPagePresenter {
     _repository.fetchUser().then((user) {
       _view.showPeople(user);
     }).catchError((onError) {
-      _view.showError(onError);
+      _view.showError(onError.toString());
     });
   }
 
