@@ -78,7 +78,7 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                   children: <Widget>[
                     Container(
                       margin: EdgeInsets.only(top: 5),
-                      height: 110,
+                      height: 130,
                       decoration: BoxDecoration(
                         color: HexColor("#f9f9f9"),
                         border: Border(
@@ -99,7 +99,7 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                                     TabInfo("My name is",
                                         "${people.name.title} ${people.name.first} ${people.name.last}"),
                                     TabInfo("My SSN is", people.SSN),
-                                    TabInfo("My map is",
+                                    TabInfo("My address is",
                                         "${people.location.street} - ${people.location.city} - ${people.location.state}"),
                                     TabInfo("My phone is",
                                         "${people.phone} - or ${people.cell}"),
@@ -109,7 +109,7 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
                               ),
                               Container(
                                 constraints: BoxConstraints.expand(height: 50),
-                                padding: EdgeInsets.only(left: 30, right: 30),
+                                padding: EdgeInsets.only(left: 60, right: 60),
                                 child: TabBar(
                                     indicator: UnderlineTabIndicator(
                                       borderSide: BorderSide(
@@ -191,11 +191,26 @@ class _MediaPageState extends State<MediaPage> implements MediaPageContract {
     );
 
     Widget sizeBoxControl = Container(
-      padding: EdgeInsets.only(left: 50.0, right: 50.0, bottom: 20.0),
-      child: SizedBox(
-        height: 340.0,
-        width: screenSize.width - 100,
-        child: cardControl,
+      decoration: BoxDecoration(color: HexColor("#f9f9f9")),
+      child: Center(
+        child: Column(
+          children: <Widget>[
+            Stack(
+              children: <Widget>[
+                Container(
+                  decoration: BoxDecoration(
+                    color: HexColor("#2d2e32"),
+                  ),
+                  height: 100,
+                ),
+                Container(
+                  padding: EdgeInsets.only(left: 5, right: 10, top: 20),
+                  child: cardControl,
+                )
+              ],
+            ),
+          ],
+        ),
       ),
     );
 
